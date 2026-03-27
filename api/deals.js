@@ -26,8 +26,8 @@ module.exports = async function fetchDeals(query = {}) {
   url.searchParams.set('limit', limit);
   url.searchParams.set('sort', 'discount');
 
-  try {
-    const response = await fetch(url.toString(), {
+  async function fetchData(requestUrl) {
+    const response = await fetch(requestUrl, {
       headers: {
         'User-Agent': 'SteamScout-ITAD/1.0',
         Accept: 'application/json'
@@ -36,10 +36,35 @@ module.exports = async function fetchDeals(query = {}) {
 
     if (!response.ok) {
       const body = await response.text();
-      throw new Error(`ITAD HTTP ${response.status}: ${body}`);
+      return { status: response.status, body };
     }
 
-    const data = await response.json();
+    return { status: response.status, body: await response.json() };
+  }
+
+  try {
+    let result = await fetchData(url.toString());
+
+    if (result.status === 404) {
+      // If v02 endpoint changed or is invalid, try v01 fallback.
+      const fallbackUrl = new URL(fallbackEndpoint);
+      fallbackUrl.searchParams.set('key', apiKey);
+      fallbackUrl.searchParams.set('country', country);
+      fallbackUrl.searchParams.set('shops', shops);
+      fallbackUrl.searchParams.set('limit', limit);
+      fallbackUrl.searchParams.set('sort', 'discount');
+
+      result = await fetchData(fallbackUrl.toString());
+      if (result.status === 404) {
+        throw new Error(`ITAD endpoint not found (404) at both v02 and v01`);
+      }
+    }
+
+    if (result.status < 200 || result.status >= 300) {
+      throw new Error(`ITAD HTTP ${result.status}: ${result.body}`);
+    }
+
+    const data = result.body;
 
     // v02 returns { list: [...], count: N }
     const rawList = data.list || data.deals || [];
