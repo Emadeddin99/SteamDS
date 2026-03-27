@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SteamScout — Game Deals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">↓</span>
+        STEAMSCOUT
+      </div>
+
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="search" class="input" type="search" placeholder="Search game title…" />
+        </div>
+
+        <input id="minDiscount" class="input input-sm" type="number" min="0" max="100" placeholder="Min % off" />
+        <input id="maxPrice"    class="input input-sm" type="number" min="0" step="0.01" placeholder="Max $" />
+
+        <select id="dealType" class="select">
+          <option value="all">All types</option>
+          <option value="sale">Sale</option>
+          <option value="giveaway">Free / Giveaway</option>
+        </select>
+
+        <select id="shops" class="select">
+          <option value="steam">Steam</option>
+          <option value="gog">GOG</option>
+          <option value="epic">Epic</option>
+          <option value="humble">Humble</option>
+          <option value="fanatical">Fanatical</option>
+          <option value="steam,gog,epic,humble,fanatical">All stores</option>
+        </select>
+
+        <select id="sort" class="select">
+          <option value="discount">Best discount</option>
+          <option value="price_asc">Lowest price</option>
+          <option value="price_desc">Highest price</option>
+        </select>
+
+        <input id="limit" class="input input-sm" type="number" min="10" max="500" step="10" placeholder="Limit" />
+
+        <button id="refresh" class="btn-refresh">↺ Refresh</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="status-bar">
+      <span id="status">Loading deals…</span>
+    </div>
+    <div id="grid" class="card-grid"></div>
+    <button id="loadMore" class="load-more" style="display:none">Load more</button>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
