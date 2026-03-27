@@ -14,8 +14,12 @@ module.exports = async function fetchDeals(query = {}) {
     };
   }
 
-  // ── Correct v02 endpoint ──────────────────────────────────────────────
-  const url = new URL('https://api.isthereanydeal.com/v02/deals/list/');
+  // ── ITAD deals endpoint (v02) ───────────────────────────────────────
+  // Old endpoint might 404 in some environments; fallback to v01 for compatibility.
+  const endpoint = 'https://api.isthereanydeal.com/v02/deals/list';
+  const fallbackEndpoint = 'https://api.isthereanydeal.com/v01/deals/list';
+
+  const url = new URL(endpoint);
   url.searchParams.set('key', apiKey);
   url.searchParams.set('country', country);
   url.searchParams.set('shops', shops);
