@@ -14,17 +14,27 @@ module.exports = async function fetchDeals(query = {}) {
     };
   }
 
-  // ── ITAD deals endpoint (v02) ───────────────────────────────────────
-  // Old endpoint might 404 in some environments; fallback to v01 for compatibility.
-  const endpoint = 'https://api.isthereanydeal.com/v02/deals/list';
-  const fallbackEndpoint = 'https://api.isthereanydeal.com/v01/deals/list';
+  // ── ITAD deals endpoint (v02 and v01 variants) ──────────────
+  const endpoints = [
+    'https://api.isthereanydeal.com/v02/deals/list',
+    'https://api.isthereanydeal.com/v02/deals/list/',
+    'https://api.isthereanydeal.com/v02/deals',
+    'https://api.isthereanydeal.com/v02/deals/',
+    'https://api.isthereanydeal.com/v01/deals/list',
+    'https://api.isthereanydeal.com/v01/deals/list/',
+    'https://api.isthereanydeal.com/v01/deals',
+    'https://api.isthereanydeal.com/v01/deals/'
+  ];
 
-  const url = new URL(endpoint);
-  url.searchParams.set('key', apiKey);
-  url.searchParams.set('country', country);
-  url.searchParams.set('shops', shops);
-  url.searchParams.set('limit', limit);
-  url.searchParams.set('sort', 'discount');
+  async function buildUrl(base) {
+    const url = new URL(base);
+    url.searchParams.set('key', apiKey);
+    url.searchParams.set('country', country);
+    url.searchParams.set('shops', shops);
+    url.searchParams.set('limit', limit);
+    url.searchParams.set('sort', 'discount');
+    return url.toString();
+  }
 
   async function fetchData(requestUrl) {
     const response = await fetch(requestUrl, {
@@ -43,28 +53,30 @@ module.exports = async function fetchDeals(query = {}) {
   }
 
   try {
-    let result = await fetchData(url.toString());
+    let lastError = null;
+    let data = null;
 
-    if (result.status === 404) {
-      // If v02 endpoint changed or is invalid, try v01 fallback.
-      const fallbackUrl = new URL(fallbackEndpoint);
-      fallbackUrl.searchParams.set('key', apiKey);
-      fallbackUrl.searchParams.set('country', country);
-      fallbackUrl.searchParams.set('shops', shops);
-      fallbackUrl.searchParams.set('limit', limit);
-      fallbackUrl.searchParams.set('sort', 'discount');
-
-      result = await fetchData(fallbackUrl.toString());
-      if (result.status === 404) {
-        throw new Error(`ITAD endpoint not found (404) at both v02 and v01`);
+    for (const endpoint of endpoints) {
+      const result = await fetchData(await buildUrl(endpoint));
+      if (result.status >= 200 && result.status < 300) {
+        data = result.body;
+        break;
       }
-    }
 
-    if (result.status < 200 || result.status >= 300) {
+      if (result.status === 404) {
+        // continue to next endpoint candidate
+        lastError = `ITAD endpoint 404: ${endpoint}`;
+        continue;
+      }
+
+      // If bad status other than 404 we should not keep trying the next URL.
       throw new Error(`ITAD HTTP ${result.status}: ${result.body}`);
     }
 
-    const data = result.body;
+    if (!data) {
+      throw new Error(`ITAD endpoint not found (404) at all candidates. Last error: ${lastError}`);
+    }
+
 
     // v02 returns { list: [...], count: N }
     const rawList = data.list || data.deals || [];

@@ -14,6 +14,9 @@ app.use(express.json());
 // Static files live in /public
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Avoid noisy console 404s for favicon requests
+app.get('/favicon.ico', (req, res) => res.sendStatus(204));
+
 app.get('/api/deals', async (req, res) => {
   try {
     const result = await dealsApi(req.query);
